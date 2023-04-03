@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package Wallet;
+
+service Wallet{
+  rpc operate(OperateRequest) returns(OperateResponse);
+}
+
+message OperateRequest{
+  enum type{
+    balance_id = 0;
+    user_id = 1;
+  }
+  type typ = 1;
+  uint64 id = 2;
+  int64 num = 3;
+  bool force = 4;
+}
+
+message OperateResponse{
+  uint64 balance_id = 1;
+  uint64 user_id = 2;
+  uint64 num = 3;
+}

@@ -1,0 +1,14 @@
+### 查看物品的评论
+GET http://{{comment}}/comment_of?item_id=2
+
+
+### 进行评论
+POST http://{{comment}}/comment_to
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "item_id": 2,
+  "comment_to": 0,
+  "comment": "第一个评论"
+}

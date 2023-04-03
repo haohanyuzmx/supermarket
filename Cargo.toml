@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    "util",
+    "table_rbs",
+    "login",
+    "sale",
+    "user_data",
+    "comment"
+]
+

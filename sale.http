@@ -1,0 +1,98 @@
+### add_item 创建物品
+POST http://{{sale}}/add_item
+Authorization: {{rootAuth}}
+Content-Type: application/json
+
+{
+  "name": "纸巾",
+  "kind": "生活用品",
+  "price": 5,
+  "remain": 5
+}
+### add_item_num 增加物品数量
+POST http://{{sale}}/add_item_num
+Authorization: {{rootAuth}}
+Content-Type: application/json
+
+{
+  "item": {
+    "item_id": 1
+  },
+  "num": 10
+}
+### 职工增加物品
+POST http://{{sale}}/add_item_num
+Authorization: {{workerAuth}}
+Content-Type: application/json
+
+{
+  "item": {
+    "item_name": "辣条"
+  },
+  "num": 10
+}
+### 职工修改物品
+POST http://{{sale}}/change_item_num
+Authorization: {{workerAuth}}
+Content-Type: application/json
+
+{
+  "item": {
+    "item_id": 1
+  },
+  "num": 20
+}
+
+### 放进购物车
+POST http://{{sale}}/add_to_card
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "item": {
+    "item_id": 2
+  },
+  "num": 3
+}
+### 修改record的home地址
+POST http://{{sale}}/change_home
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "record": {
+    "record_id": 1
+  },
+  "home_id": 2
+}
+
+### 展示record
+GET http://{{sale}}/get_records
+Authorization: {{normalAuth}}
+
+### 为record支付
+POST http://{{sale}}/pay
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "record_id": 1
+}
+
+### 工作人员设置record配送状态
+POST http://{{sale}}/send
+Authorization: {{workerAuth}}
+Content-Type: application/json
+
+{
+  "record_id": 1
+}
+
+### 工作人员或自己设置record接收状态
+POST http://{{sale}}/send
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "record_id": 1
+}

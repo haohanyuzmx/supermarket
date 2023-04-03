@@ -1,0 +1,76 @@
+### sign
+POST http://{{login}}/sign
+Content-Type: application/json
+
+{
+  "user_name": "worker",
+  "pass_word": "worker"
+}
+### root_login
+POST http://{{login}}/login
+Content-Type: application/json
+
+{
+  "user_name": "333",
+  "pass_word": "333"
+}
+
+> {%
+    client.global.set("root_token", response.body.data.token);
+    client.global.set("root_rt", response.body.data.refresh_token)
+%}
+### worker_login
+POST http://{{login}}/login
+Content-Type: application/json
+
+{
+  "user_name": "worker",
+  "pass_word": "worker"
+}
+
+> {%
+    client.global.set("worker_token", response.body.data.token);
+    client.global.set("worker_rt", response.body.data.refresh_token)
+%}
+### normal_login
+POST http://{{login}}/login
+Content-Type: application/json
+
+{
+  "user_name": "hhh",
+  "pass_word": "xxx"
+}
+
+> {%
+    client.global.set("normal_token", response.body.data.token);
+    client.global.set("normal_rt", response.body.data.refresh_token)
+%}
+### refresh_token
+POST http://{{login}}/refresh_token
+Content-Type: application/json
+
+{
+  "refresh_token": "{{root_rt}}"
+}
+### grpc_validate_token
+GRPC {{auth}}/Validate.Validate/validate_token
+
+{
+  "token": "{{normalAuth}}"
+}
+### grpc_add_url_auth
+GRPC {{auth}}/Validate.Validate/add_url_auth
+
+{
+  "auth": "normal",
+  "url": "/pay"
+}
+### add_auth
+POST http://{{login}}/add_auth
+Authorization: {{root_token}}
+Content-Type: application/json
+
+{
+  "user_name": "worker",
+  "role_name": "worker"
+}

@@ -1,0 +1,80 @@
+### 添加地址
+POST http://{{user-data}}/add_home_address
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "address": "bj-sh"
+}
+### 修改地址
+POST http://{{user-data}}/change_home_address
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "old": {
+    "address": "bj-sh"
+  },
+  "new": {
+    "address": "cq-lp"
+  }
+}
+### 删除地址
+POST http://{{user-data}}/delete_home_address
+Authorization: {{normalAuth}}
+Content-Type: application/json
+
+{
+  "id": 3
+}
+### 获取所有地址
+GET http://{{user-data}}/get_all_address
+Authorization: {{normalAuth}}
+### grpc-获取所有地址
+GRPC {{home}}/Home.Home/get_all_home
+
+{
+  "user_id": 2
+}
+
+### grpc-获取地址
+GRPC {{home}}/Home.Home/get_home_by_id
+
+{
+  "home_id": 1
+}
+
+### 充值
+POST http://{{user-data}}/recharge_to_balance
+Authorization: {{normalAuth}}
+Content-Type: application/x-www-form-urlencoded
+
+num=10
+
+### 提现
+POST http://{{user-data}}/cash_out_from_balance
+Authorization: {{normalAuth}}
+Content-Type: application/x-www-form-urlencoded
+
+num=10
+
+### 管理员操作
+POST http://{{user-data}}/root_operate_balance
+Authorization: {{rootAuth}}
+Content-Type: application/json
+
+{
+  "balance_id": 1,
+  "num": -50,
+  "force": false
+}
+
+### grpc-钱包
+GRPC {{wallet}}/Wallet.Wallet/operate
+
+{
+  "typ": "user_id",
+  "id": 2,
+  "num": -20,
+  "force": false
+}

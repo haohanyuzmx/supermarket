@@ -1,0 +1,49 @@
+[package]
+name = "login"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.6.11"
+tower-http = {version = "0.4.0",features=["trace"]}
+hyper = { version = "0.14.25", features = ["full"] }
+tokio = { version = "1.26.0", features = ["full"] }
+tower = "0.4.13"
+tracing="0.1.37"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json = "1.0.94"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+hmac = "0.12.1"
+sha2 = "0.10.6"
+hex = "0.4.3"
+base64 = "0.21.0"
+md5 = "0.7.0"
+chrono = "0.4.24"
+lazy_static = "1.4.0"
+thiserror = "1.0.40"
+anyhow = "1.0.70"
+# logging(option)
+log = "0.4"
+fast_log = "1.5"
+# serde/rbs (required)
+rbs = "4.3.1"
+rbatis = "4.3.0"
+rbdc-mysql = "4.3.1"
+
+table_rbs={path="../table_rbs"}
+util={path="../util"}
+
+redis = {version="0.22.3",features=["tokio-comp"]}
+
+tonic = "0.8.3"
+prost = "0.11.8"
+
+async-trait = "0.1.67"
+
+[build-dependencies]
+tonic-build = "0.8.4"
+[dev-dependencies]
+tokio-test = "0.4.2"
+

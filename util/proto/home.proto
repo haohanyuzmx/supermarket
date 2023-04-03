@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package Home;
+
+service Home{
+  rpc get_all_home(GetAllHomeRequest) returns(GetAllHomeResponse){}
+  rpc get_home_by_id(HomeID)returns(HomeAddress){}
+}
+
+message GetAllHomeRequest{
+  uint64 user_id = 1;
+}
+
+message GetAllHomeResponse{
+  repeated HomeAddress home_addresses = 1;
+}
+
+message HomeID{
+  uint64 home_id = 1;
+}
+
+message HomeAddress{
+  uint64 address_id = 1;
+  uint64 user_id = 2;
+  string address = 3;
+}
