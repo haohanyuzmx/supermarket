@@ -1,4 +1,5 @@
 target
+*.log
 Cargo.lock
 .idea
 .DS_Store

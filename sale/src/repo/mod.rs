@@ -2,7 +2,7 @@ use rbatis::Rbatis;
 use rbdc_mysql::driver::MysqlDriver;
 use std::collections::HashMap;
 
-use util::rbatis::init::{InitItem, InitTable};
+use util::rbatis::init::InitTable;
 
 pub mod item;
 

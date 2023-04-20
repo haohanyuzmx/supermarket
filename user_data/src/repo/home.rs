@@ -73,7 +73,6 @@ impl Home {
     }
 
     pub async fn get_all_by_user(user_id: u64) -> Result<Vec<Self>> {
-        let mut rb = DB.clone();
         Ok(Home::select_by_column(&mut DB.clone(), "user_id", user_id).await?)
     }
 

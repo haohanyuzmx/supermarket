@@ -1,0 +1,25 @@
+[package]
+name = "init_ruser"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+table_rbs={path="../table_rbs"}
+util={path="../util"}
+axum = {version="0.6.11",features=["default","macros"]}
+
+tokio = { version = "1.26.0", features = ["full"] }
+tracing="0.1.37"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json = "1.0.94"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+lazy_static = "1.4.0"
+
+rbs = "4.3.1"
+rbatis = "4.3.0"
+rbdc-mysql = "4.3.1"
+
+anyhow = "1.0.70"
+paste = "1.0.12"

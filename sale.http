@@ -4,9 +4,9 @@ Authorization: {{rootAuth}}
 Content-Type: application/json
 
 {
-  "name": "纸巾",
-  "kind": "生活用品",
-  "price": 5,
+  "name": "辣条",
+  "kind": "食物",
+  "price": 10,
   "remain": 5
 }
 ### add_item_num 增加物品数量
@@ -16,7 +16,7 @@ Content-Type: application/json
 
 {
   "item": {
-    "item_id": 1
+    "item_id": 2
   },
   "num": 10
 }
@@ -40,19 +40,25 @@ Content-Type: application/json
   "item": {
     "item_id": 1
   },
-  "num": 20
+  "num": 30
 }
 
+### 展示物品
+GET http://{{sale}}/show_items
+
 ### 放进购物车
-POST http://{{sale}}/add_to_card
+POST http://{{sale}}/add_to_cart
 Authorization: {{normalAuth}}
 Content-Type: application/json
 
 {
   "item": {
-    "item_id": 2
+    "item": {
+      "item_id": 2
+    },
+    "num": -2
   },
-  "num": 3
+  "home_id": 1
 }
 ### 修改record的home地址
 POST http://{{sale}}/change_home
@@ -61,7 +67,7 @@ Content-Type: application/json
 
 {
   "record": {
-    "record_id": 1
+    "record_id": 5
   },
   "home_id": 2
 }
@@ -76,7 +82,7 @@ Authorization: {{normalAuth}}
 Content-Type: application/json
 
 {
-  "record_id": 1
+  "record_id": 5
 }
 
 ### 工作人员设置record配送状态

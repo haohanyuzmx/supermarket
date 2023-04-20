@@ -20,7 +20,7 @@ macro_rules! response {
     }};
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Response<T: Serialize> {
     pub code: i32,
     pub msg: String,

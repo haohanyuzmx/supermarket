@@ -1,5 +1,5 @@
 use axum::routing::{get, post};
-use axum::{middleware, Router};
+use axum::Router;
 use tower_http::trace::TraceLayer;
 
 mod api;
@@ -12,9 +12,7 @@ async fn main() {
     // if std::env::var_os("RUST_LOG").is_none() {
     //     std::env::set_var("RUST_LOG", "tower_http=debug,middleware=debug");
     // }
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .init();
+    util::log_init::init::init();
 
     repo::init().await;
     util::pb::client::init(
@@ -36,6 +34,7 @@ async fn main() {
 
     tokio::spawn(async move { pb::grpc_server("0.0.0.0:8090") }.await);
 
+    // show_balance
     let app = Router::new()
         .route("/add_home_address", post(api::home::add_home_address))
         .route("/change_home_address", post(api::home::change_home_address))
@@ -44,7 +43,7 @@ async fn main() {
         .route("/recharge_to_balance", post(api::wallet::recharge))
         .route("/cash_out_from_balance", post(api::wallet::cash_out))
         .route("/root_operate_balance", post(api::wallet::root_operate))
-        .layer(middleware::from_fn(util::axum::auth::auth))
+        .layer(util::axum::auth::AuthLayer::new(true, true, false, false))
         .layer(TraceLayer::new_for_http());
 
     axum::Server::bind(&"0.0.0.0:8082".parse().unwrap())

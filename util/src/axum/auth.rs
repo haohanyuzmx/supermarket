@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
+use tracing::info;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct UserToken {
@@ -95,7 +96,7 @@ impl From<UserInfo> for UserToken {
 }
 
 #[derive(Clone)]
-struct AuthLayer {
+pub struct AuthLayer {
     pub validate: bool,
     pub auth: bool,
     pub home: bool,
@@ -104,7 +105,8 @@ struct AuthLayer {
 }
 
 impl AuthLayer {
-    fn new(validate: bool, auth: bool, home: bool, wallet: bool) -> Self {
+    #[allow(dead_code)]
+    pub fn new(validate: bool, auth: bool, home: bool, wallet: bool) -> Self {
         Self {
             validate,
             auth,
@@ -135,7 +137,7 @@ impl<S> Layer<S> for AuthLayer {
 }
 
 #[derive(Clone)]
-struct AuthServer<S> {
+pub struct AuthServer<S> {
     validate: bool,
     auth: bool,
     home: bool,
@@ -200,13 +202,14 @@ pub async fn auth_fn(req: &Request<Body>, auth: bool) -> Result<UserToken, Statu
     } else {
         return Err(StatusCode::UNAUTHORIZED);
     };
-    if let Ok((current_user, ok)) =
-        validate(auth_header.to_string(), req.uri().path().to_string()).await
-    {
-        //可选
-        if !auth || ok {
-            return Ok(current_user);
+    match validate(auth_header.to_string(), req.uri().path().to_string()).await {
+        Ok((current_user, ok)) => {
+            //可选
+            if !auth || ok {
+                return Ok(current_user);
+            }
         }
+        Err(e) => info!("{}", e),
     }
     Err(StatusCode::UNAUTHORIZED)
 }

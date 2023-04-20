@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use table_rbs::CreateTable;
 
-use crate::repo::user::User;
+use crate::repo::user::{get_user_by_info, User};
 use crate::repo::DB;
 
 trait GetRoleID {
@@ -213,6 +213,21 @@ pub struct UserBindRole {
     pub user_id: u64,
     #[index]
     pub role_id: u64,
+}
+
+#[async_trait]
+impl util::rbatis::init::InitItem for UserBindRole {
+    async fn init() {
+        let user_roles = vec![("333", "root"), ("hhh", "normal"), ("worker", "worker")];
+        for (user_name, role_name) in user_roles {
+            get_user_by_info(user_name, None)
+                .await
+                .unwrap()
+                .insert_into_role(role_name)
+                .await
+                .unwrap();
+        }
+    }
 }
 
 impl_get_role_id!(UserBindRole);

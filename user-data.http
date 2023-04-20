@@ -4,7 +4,7 @@ Authorization: {{normalAuth}}
 Content-Type: application/json
 
 {
-  "address": "bj-sh"
+  "address": "cq-lp"
 }
 ### 修改地址
 POST http://{{user-data}}/change_home_address

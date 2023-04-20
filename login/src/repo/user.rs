@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::result;
 
+use async_trait::async_trait;
 use rbatis::rbdc;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -15,6 +16,20 @@ pub struct User {
     #[index]
     pub user_name: String,
     pub pass_word: String,
+}
+
+#[async_trait]
+impl util::rbatis::init::InitItem for User {
+    async fn init() {
+        let users = vec![("333", "333"), ("hhh", "xxx"), ("worker", "worker")];
+        for user in users {
+            match create_user(user.0.to_string(), user.1.to_string()).await {
+                Ok(_) => {}
+                Err(DBExecErr::UserExist) => {}
+                Err(e) => panic!("{}", e),
+            };
+        }
+    }
 }
 
 impl User {
@@ -47,7 +62,7 @@ impl Display for DBExecErr {
 }
 
 pub async fn create_user(user_name: String, pass_word: String) -> Result<User> {
-    let mut user = User::new(user_name, pass_word);
+    let mut user = User::new(user_name, hex::encode(md5::compute(pass_word).to_vec()));
     let rb = DB.clone();
     let tx_no_defer = rb.acquire_begin().await?;
     let mut tx = tx_no_defer.defer_async(|mut tx| async move {
@@ -77,9 +92,13 @@ pub async fn get_user_by_info(user_name: &str, pass_word: Option<&str>) -> Resul
             .pop()
             .ok_or_else(|| DBExecErr::UserNotFound),
 
-        Some(pass_word) => User::select_by_info(&mut rb, user_name, pass_word)
-            .await?
-            .ok_or_else(|| DBExecErr::UserNotFound),
+        Some(pass_word) => User::select_by_info(
+            &mut rb,
+            user_name,
+            &hex::encode(md5::compute(pass_word).to_vec()),
+        )
+        .await?
+        .ok_or_else(|| DBExecErr::UserNotFound),
     }
 }
 

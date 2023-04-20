@@ -2,12 +2,10 @@ use crate::api::item::{AddItemRequest, ItemOperateRequest, ItemResponse, Record 
 use crate::repo::item::{Item, Record};
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
-use std::collections::HashMap;
-use std::future::Future;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::{Mutex, MutexGuard, OwnedMutexGuard};
-use tracing::info;
-use tracing::log::{error, log, warn};
+use tokio::sync::{Mutex, OwnedMutexGuard};
+use tracing::log::{error, warn};
 use util::axum::auth::UserToken;
 use util::pb::client::{get_home_by_id, operate_wallet, WalletIndex};
 
@@ -40,7 +38,7 @@ pub async fn set_item_price(request: ItemOperateRequest) -> Result<Item> {
     Ok(item)
 }
 
-pub async fn add_to_card(
+pub async fn add_to_cart(
     item_index: ItemOperateRequest,
     user_id: u64,
     home_id: u64,
@@ -60,6 +58,14 @@ pub async fn get_all_record_by_user(user_id: u64) -> Result<Vec<RespRecord>> {
     Ok(vec_record)
 }
 
+pub async fn get_consult_record() -> Result<Vec<RespRecord>> {
+    let mut vec_record = vec![];
+    for repo_record in Record::get_status_consult().await?.into_iter() {
+        vec_record.push(RespRecord::new(repo_record, None, None).await)
+    }
+    Ok(vec_record)
+}
+
 pub async fn get_all_item() -> Result<Vec<ItemResponse>> {
     Ok(Item::get_all()
         .await?
@@ -69,7 +75,7 @@ pub async fn get_all_item() -> Result<Vec<ItemResponse>> {
 }
 
 pub async fn change_record_home(mut record: Record, home_id: u64) -> Result<RespRecord> {
-    record.get_self().await?;
+    record.get_self(None).await?;
     let home = get_home_by_id(home_id).await?;
     if home.user_id != record.user_id {
         return Err(anyhow!("not your home"));
@@ -90,38 +96,59 @@ async fn get_record_operate_lock(record_id: u64) -> OwnedMutexGuard<()> {
     lock
 }
 
-pub async fn pay_record(mut record: Record, user: UserToken) -> Result<RespRecord> {
-    record.get_self().await?;
+pub enum Target {
+    Pay,
+    Cancel,
+}
+
+macro_rules! hashset {
+    ($($status:expr),+) => {
+        [$($status.to_string()),+].into_iter().collect::<HashSet<String>>()
+    };
+}
+
+pub async fn wallet_record(
+    mut record: Record,
+    user: UserToken,
+    target: Target,
+) -> Result<RespRecord> {
+    record.get_self(Some(hashset!("cart", "pay"))).await?;
     let operate = get_record_operate_lock(record.id.unwrap()).await;
     if record.user_id != user.user_id {
-        return Err(anyhow!("only allow self pay"));
+        return Err(anyhow!("only allow self operate"));
     }
     let item = Item::select_by_id(record.item_id)
         .await
         .ok_or(anyhow!("get item err"))?;
-    record.pay().await?;
 
-    match operate_wallet(
-        WalletIndex::UserID(user.user_id),
-        -((item.price * record.num) as i64),
-        false,
-    )
-    .await
-    {
-        Err(e) => {
-            warn!(
-                "pay err! {},num is {}",
-                e,
-                -((item.price * record.num) as i64)
-            );
-            match record.force_change_status("cart".to_string()).await {
-                Err(e) => {
-                    error!("{:?} change to cart wrong {}", record, &e);
-                    return Err(e);
+    let now_num = record.num;
+
+    let (num, last_status) = match target {
+        Target::Pay => {
+            record.pay().await?;
+            (-((item.price * record.num) as i64), "cart".to_string())
+        }
+        Target::Cancel => {
+            record.cancel().await?;
+            ((item.price * record.num) as i64, "pay".to_string())
+        }
+    };
+
+    match operate_wallet(WalletIndex::UserID(user.user_id), num, false).await {
+        Err(wallet_err) => {
+            warn!("pay err! {},num is {}", wallet_err, num);
+            match record.force_change_status(last_status).await {
+                Err(record_err) => {
+                    error!("{:?} change to cart wrong {}", record, &record_err);
+                    return Err(anyhow!(
+                        "wallet err {},record err,{}",
+                        wallet_err,
+                        record_err
+                    ));
                 }
                 _ => {}
             };
-            return Err(e);
+            return Err(wallet_err);
         }
         _ => {}
     };
@@ -129,14 +156,14 @@ pub async fn pay_record(mut record: Record, user: UserToken) -> Result<RespRecor
 }
 
 pub async fn send_out_record(mut record: Record) -> Result<RespRecord> {
-    record.get_self().await?;
+    record.get_self(Some(hashset!("pay"))).await?;
     let operate = get_record_operate_lock(record.id.unwrap()).await;
     record.send().await?;
     Ok(RespRecord::new(record, None, None).await)
 }
 
 pub async fn sign_record(mut record: Record, user: UserToken) -> Result<RespRecord> {
-    record.get_self().await?;
+    record.get_self(Some(hashset!("sending"))).await?;
     let operate = get_record_operate_lock(record.id.unwrap()).await;
     if record.user_id != user.user_id {
         if user
@@ -150,6 +177,23 @@ pub async fn sign_record(mut record: Record, user: UserToken) -> Result<RespReco
             return Err(anyhow!("un auth"));
         }
     }
-    record.send().await?;
+    record.sign().await?;
+    Ok(RespRecord::new(record, None, None).await)
+}
+
+pub async fn user_consult(mut record: Record, user_id: u64) -> Result<RespRecord> {
+    record.get_self(Some(hashset!("sign", "sending"))).await?;
+    let operate = get_record_operate_lock(record.id.unwrap()).await;
+    if record.user_id != user_id {
+        return Err(anyhow!("user_id error"));
+    }
+    record.consult().await?;
+    Ok(RespRecord::new(record, None, None).await)
+}
+
+pub async fn root_consult(mut record: Record) -> Result<RespRecord> {
+    record.get_self(Some(hashset!("discard"))).await?;
+    let operate = get_record_operate_lock(record.id.unwrap()).await;
+    record.discard().await?;
     Ok(RespRecord::new(record, None, None).await)
 }

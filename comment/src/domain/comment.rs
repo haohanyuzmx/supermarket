@@ -172,10 +172,11 @@ pub async fn change_comment(
     let mut comment = Comment::select_by_id(comment_id)
         .await
         .ok_or(anyhow!("not found"))?;
-    if comment.user_id == user_id {
+    if comment.user_id != user_id {
         return Err(anyhow!("not user"));
     }
-    Ok(comment.change(comment_str).await?.into())
+    comment.change(comment_str).await?;
+    Ok(comment.into())
 }
 
 pub async fn delete_comment(comment_id: u64, user_id: u64) -> Result<CommentNode> {

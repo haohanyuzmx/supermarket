@@ -12,9 +12,8 @@ async fn main() {
     // if std::env::var_os("RUST_LOG").is_none() {
     //     std::env::set_var("RUST_LOG", "tower_http=debug,middleware=debug");
     // }
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .init();
+
+    util::log_init::init::init();
 
     repo::init().await;
 

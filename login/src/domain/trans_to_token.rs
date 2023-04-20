@@ -135,9 +135,9 @@ mod tests {
     fn test_token() {
         let user_token = UserToken::new(
             &User {
-                id: Some(2),
-                user_name: "hhh".to_string(),
-                pass_word: "xxx".to_string(),
+                id: Some(3),
+                user_name: "worker".to_string(),
+                pass_word: "worker".to_string(),
             },
             Duration::weeks(7),
         );
@@ -147,4 +147,6 @@ mod tests {
         let check_user = validate(&token).unwrap();
         assert_eq!(user_token, check_user);
     }
+    #[test]
+    fn test_validate() {}
 }

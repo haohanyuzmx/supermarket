@@ -1,7 +1,8 @@
 use crate::domain::item::{
-    add_item_num as domain_add_item_num, add_to_card as domain_add_to_card, change_record_home,
-    create_item, get_all_item, get_all_record_by_user, pay_record, send_out_record, set_item_num,
-    set_item_price,
+    add_item_num as domain_add_item_num, add_to_cart as domain_add_to_cart, change_record_home,
+    create_item, get_all_item, get_all_record_by_user, get_consult_record, root_consult,
+    send_out_record, set_item_num, set_item_price, sign_record, user_consult, wallet_record,
+    Target,
 };
 
 use crate::repo::item::{Item, Record as repo_record};
@@ -34,7 +35,7 @@ pub struct AddItemRequest {
     pub remain: u64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ItemResponse {
     pub id: u64,
     pub name: String,
@@ -136,20 +137,28 @@ impl Record {
     }
 }
 
-pub async fn add_to_card(
+#[derive(Deserialize, Serialize)]
+pub struct AddToCartRequest {
+    item: ItemOperateRequest,
+    home_id: Option<u64>,
+}
+
+pub async fn add_to_cart(
     Extension(user): Extension<UserToken>,
-    Json(req): Json<ItemOperateRequest>,
+    Json(req): Json<AddToCartRequest>,
 ) -> Json<Response<Record>> {
     let resp = response!(
-        domain_add_to_card(
-            req,
+        domain_add_to_cart(
+            req.item,
             user.user_id,
-            user.get_homes()
-                .await
-                .unwrap_or_default()
-                .pop()
-                .unwrap_or_default()
-                .home_id
+            req.home_id.unwrap_or(
+                user.get_homes()
+                    .await
+                    .unwrap_or_default()
+                    .pop()
+                    .unwrap_or_default()
+                    .home_id
+            )
         )
         .await
     );
@@ -170,8 +179,8 @@ pub async fn show_items() -> Json<Response<Vec<ItemResponse>>> {
 pub enum RecordIndex {
     #[serde(rename = "record_id")]
     RecordID(u64),
-    #[serde(rename = "record_info")]
-    RecordInfo { item_id: u64, home_id: u64 },
+    // #[serde(rename = "record_info")]
+    // RecordInfo { item_id: u64, home_id: u64 },
 }
 
 impl Into<repo_record> for RecordIndex {
@@ -181,11 +190,11 @@ impl Into<repo_record> for RecordIndex {
                 id: Some(id),
                 ..Default::default()
             },
-            RecordIndex::RecordInfo { item_id, home_id } => repo_record {
-                item_id,
-                home_id,
-                ..Default::default()
-            },
+            // RecordIndex::RecordInfo { item_id, home_id } => repo_record {
+            //     item_id,
+            //     home_id,
+            //     ..Default::default()
+            // },
         }
     }
 }
@@ -212,7 +221,7 @@ pub async fn pay(
 ) -> Response<Record> {
     let mut record: repo_record = req.into();
     record.user_id = user.user_id;
-    response!(pay_record(record, user).await)
+    response!(wallet_record(record, user, Target::Pay).await)
 }
 
 pub async fn send(
@@ -230,5 +239,39 @@ pub async fn sign_to_record(
 ) -> Response<Record> {
     let mut record: repo_record = req.into();
     record.user_id = user.user_id;
-    response!(send_out_record(record).await)
+    response!(sign_record(record, user).await)
+}
+
+pub async fn cancel_record(
+    Extension(user): Extension<UserToken>,
+    Json(req): Json<RecordIndex>,
+) -> Response<Record> {
+    let mut record: repo_record = req.into();
+    record.user_id = user.user_id;
+    response!(wallet_record(record, user, Target::Cancel).await)
+}
+
+pub async fn consult(
+    Extension(user): Extension<UserToken>,
+    Json(req): Json<RecordIndex>,
+) -> Response<Record> {
+    let mut record: repo_record = req.into();
+    record.user_id = user.user_id;
+    let response = if user
+        .get_auths()
+        .await
+        .unwrap_or_default()
+        .iter()
+        .find(|auth| auth == "worker")
+        .is_some()
+    {
+        user_consult(record, user.user_id).await
+    } else {
+        root_consult(record).await
+    };
+    response!(response)
+}
+
+pub async fn get_consult() -> Response<Vec<Record>> {
+    response!(get_consult_record().await)
 }
