@@ -1,0 +1,6 @@
+/target
+*.log
+*.http
+*.md
+.idea
+.DS_Store

@@ -262,7 +262,7 @@ pub async fn consult(
         .await
         .unwrap_or_default()
         .iter()
-        .find(|auth| auth == "worker")
+        .find(|auth| auth == &"worker")
         .is_some()
     {
         user_consult(record, user.user_id).await
