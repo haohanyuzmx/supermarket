@@ -1,4 +1,5 @@
 ```mermaid
+
 sequenceDiagram
 		actor w as worker
     participant s as sale
@@ -33,11 +34,52 @@ sequenceDiagram
 
 
 
+
+
+
 ```mermaid
 sequenceDiagram
-		actor u as user
-    participant s as sale
-    participant w as wallet
+    actor w as 工作人员
+    participant s as 订单管理中心
+    participant l as 登录中心
+    note over w:with_token
+w->>+s: 增删改查物品、数量、价格
+s->>+l: token 鉴权
+note over s: RPC 鉴权
+l->>-s: Info
+s->>-w: 操作结果
+```
+
+
+
+```mermaid
+sequenceDiagram
+    actor w as 工作人员
+    participant s as 订单管理中心
+    participant l as 登录中心
+    note over w:with_token
+    alt 状态为待配送
+        w->>+s: 改变状态为配送中
+    else 状态为配送中
+        w->>s: 改变状态为签收 
+    else 状态为协商中
+        w->>s: 需要协商处理方案       
+    end
+    s->>+l: token 鉴权
+	note over s: RPC 鉴权
+	l->>-s: Info
+    s->>-w: 操作结果
+```
+
+
+
+
+
+```mermaid
+sequenceDiagram
+		actor u as 用户
+    participant s as 订单管理中心
+    participant w as 钱包服务
     u->>+s:查看物品
     s->>-u:所有物品
     note over u:with_token
@@ -59,6 +101,14 @@ sequenceDiagram
     
     else is sending
     u->>+s:签收物品
+    s->>-u:结果
+    
+    else is cart||pay
+    u->>+s:无条件退款
+    s->>-u:结果
+    
+    else is sending||sign
+    u->>+s:协商
     s->>-u:结果
     end
 

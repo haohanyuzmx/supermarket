@@ -34,7 +34,7 @@ macro_rules! init {
         fn connect() -> Rbatis {
             //fast_log::init(fast_log::Config::new().console()).expect("log init fail");
             let rb = Rbatis::new();
-            rb.init(MysqlDriver {}, $url)
+            rb.init(MysqlDriver {}, "mysql://root@localhost:3306/test")
                 .expect("conn to db fail");
             rb
         }
