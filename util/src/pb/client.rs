@@ -10,32 +10,29 @@ use crate::pb::wallet::{operate_request, OperateRequest};
 use tonic::transport::Channel;
 use tonic::Request;
 
-static mut V_CLIENT: Option<ValidateClient<Channel>> = None;
-static mut H_CLIENT: Option<HomeClient<Channel>> = None;
-static mut W_CLIENT: Option<WalletClient<Channel>> = None;
+static mut V_CLIENT: String = String::new();
+static mut H_CLIENT: String = String::new();
+static mut W_CLIENT: String = String::new();
 
 type Result<T> = anyhow::Result<T>;
 
-fn validate_client() -> ValidateClient<Channel> {
-    unsafe { V_CLIENT.clone().unwrap().clone() }
+async fn validate_client() -> ValidateClient<Channel> {
+    ValidateClient::connect(validate).await.ok().unwrap()
 }
 
-fn home_client() -> HomeClient<Channel> {
-    unsafe { H_CLIENT.clone().unwrap().clone() }
+async fn home_client() -> HomeClient<Channel> {
+    HomeClient::connect(home).await.ok().unwrap()
 }
 
-fn wallet_client() -> WalletClient<Channel> {
-    unsafe { W_CLIENT.clone().unwrap().clone() }
+async fn wallet_client() -> WalletClient<Channel> {
+    WalletClient::connect(wallet).await.ok().unwrap()
 }
 
 pub async fn init(validate: String, home: String, wallet: String) {
-    let v_client = ValidateClient::connect(validate).await.ok();
-    let h_client = HomeClient::connect(home).await.ok();
-    let w_client = WalletClient::connect(wallet).await.ok();
     unsafe {
-        V_CLIENT = v_client;
-        H_CLIENT = h_client;
-        W_CLIENT = w_client;
+        V_CLIENT = validate;
+        H_CLIENT = home;
+        W_CLIENT = wallet;
     }
 }
 
